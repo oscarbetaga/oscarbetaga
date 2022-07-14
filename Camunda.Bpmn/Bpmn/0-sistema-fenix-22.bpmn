@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.9.0" camunda:diagramRelationId="232c3cf1-f647-4f0d-ae8f-1aa6b815077e">
+  <bpmn:collaboration id="Collaboration_0023le7">
+    <bpmn:participant id="Participant_1eech76" name="Sistema  Fenix 22" processRef="fenix22" />
+  </bpmn:collaboration>
+  <bpmn:process id="fenix22" name="Proceso de Fenix 22" isExecutable="true" camunda:versionTag="1.0">
+    <bpmn:serviceTask id="actComunicarCiudadanoInfraccion" name="Comunicar a ciudadano infracción &#10;(pull)" camunda:type="external" camunda:topic="get-github">
+      <bpmn:documentation>Comunicación que se genera luego de crear el caso en el sistema para informar al ciudadano que existe un comparendo que debe solucionar. Se le remitirá dos urls, una para agendarse a curso, impugnación o salida de vehículos inmovilizados y otra para realizar el pago de la respectiva sanción.</bpmn:documentation>
+      <bpmn:incoming>Flow_1nr3ug8</bpmn:incoming>
+      <bpmn:outgoing>Flow_1hbdnhl</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="actConsultarTablaSanciones" name="Consulta a Tabla de Sanciones&#10;(push)">
+      <bpmn:documentation>Consulta a la BD de Fenix 22 que devuelve la información de las sanciones de acuerdo con el código de la infracción.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="method">GET</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="Accept">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="url">https://api.github.com/repos/freeCodeCamp/freeCodeCamp/community/profile</camunda:inputParameter>
+            <camunda:outputParameter name="healthPercentage">${S(response).prop("health_percentage").numberValue()}</camunda:outputParameter>
+            <camunda:outputParameter name="statusCode">#{statusCode}</camunda:outputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1hbdnhl</bpmn:incoming>
+      <bpmn:outgoing>Flow_1oq1008</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:businessRuleTask id="actReglasDecisionFlujo" name="Reglas de decisión Flujo y Agenda" camunda:resultVariable="approved" camunda:decisionRef="reglaAclaracion" camunda:mapDecisionResult="singleEntry">
+      <bpmn:documentation>De acuerdo con el código de la infracción, la fecha de la comunicación al ciudadano, el tipo de vehículo, la clase de servicio y la Edad del presunto infractor, se generar diferentes reglas de decisión que definen el flujo y el agendamiento que el presunto infractor puede realizar.</bpmn:documentation>
+      <bpmn:incoming>Flow_1oq1008</bpmn:incoming>
+      <bpmn:outgoing>Flow_0nh5qoy</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="gwRetieneLicencia" name="¿Comparendo retiene licencia?">
+      <bpmn:documentation>Si la regla de decisión define que la infracción debe retener la licencia  de conducción, la variable será "true" y el flujo tomará el camino del "Sí" de lo contrario, la variable será "false" y el flujo tomara el camino del "No".
+</bpmn:documentation>
+      <bpmn:incoming>Flow_0nh5qoy</bpmn:incoming>
+      <bpmn:outgoing>Flow_1utgkdd</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1q9jrzu</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="actRegistrarRecepcionDocumentos" name="Registrar recepción de documentos Retención Licencia" camunda:candidateGroups="Abogado" camunda:dueDate="${dateTime().plusWeeks(2).toDate()}">
+      <bpmn:documentation>Si la infracción debe retener la licencia  de conducción, en esta actividad humana asistida por un formulario, un perfil que determine la SDM deberá recibir del agente de tránsito  la siguiente documentación:
+
+Licencia
+Comparendo
+Formato retención de licencia
+Certificado medicina legal o 
+Tirilla alcohosensor
+Calibración del alcohosensor,
+Certificado de idoneidad de la autoridad de tránsito
+
+Luego deberá escanear y adjuntar en este formulario dicha documentación.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="consultaRUNT2" label="Consulta Runt?" type="boolean" />
+          <camunda:formField id="notaComparendo" label="Nota del comparendo" type="string" />
+          <camunda:formField id="verificar" label="Verificado" type="boolean" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1utgkdd</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kilgsu</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="gwCC1" name="CC1">
+      <bpmn:documentation>Compuerta convergente a la actividad de "Casos pendientes por Agenda o Pago"</bpmn:documentation>
+      <bpmn:incoming>Flow_0kilgsu</bpmn:incoming>
+      <bpmn:incoming>Flow_1q9jrzu</bpmn:incoming>
+      <bpmn:incoming>Flow_18kboet</bpmn:incoming>
+      <bpmn:outgoing>Flow_0cheg6c</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateCatchEvent id="Event_0mx6pcy" name="A casos pendientes">
+      <bpmn:documentation>Evento intermedio de enlace que permite devolver el caso de cualquier parte del flujo a la actividad humana NO asistida por formulario "Casos pendientes de Agenda o Pago".</bpmn:documentation>
+      <bpmn:outgoing>Flow_18kboet</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0aindff" name="" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="Activity_10mn9ue" name="Verificar Registro de comparendo" camunda:candidateGroups="AbogadoRevocatoria" camunda:dueDate="${dateTime().plusWeeks(1).toDate()}">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="consultaRUNT" label="Consulta Runt?" type="boolean" />
+          <camunda:formField id="healthPercentage" label="Health Percentage" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0cheg6c</bpmn:incoming>
+      <bpmn:outgoing>Flow_15a23kw</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_1f6jqyy" name="Fin">
+      <bpmn:incoming>Flow_15a23kw</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_1rk0gc4" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1oq1008" sourceRef="actConsultarTablaSanciones" targetRef="actReglasDecisionFlujo" />
+    <bpmn:sequenceFlow id="Flow_18kboet" sourceRef="Event_0mx6pcy" targetRef="gwCC1" />
+    <bpmn:sequenceFlow id="Flow_1hbdnhl" sourceRef="actComunicarCiudadanoInfraccion" targetRef="actConsultarTablaSanciones" />
+    <bpmn:sequenceFlow id="Flow_0nh5qoy" sourceRef="actReglasDecisionFlujo" targetRef="gwRetieneLicencia" />
+    <bpmn:sequenceFlow id="Flow_0kilgsu" sourceRef="actRegistrarRecepcionDocumentos" targetRef="gwCC1" />
+    <bpmn:sequenceFlow id="Flow_1utgkdd" name="Sí" sourceRef="gwRetieneLicencia" targetRef="actRegistrarRecepcionDocumentos">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1q9jrzu" name="No" sourceRef="gwRetieneLicencia" targetRef="gwCC1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!approved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1nr3ug8" sourceRef="StartEvent_1" targetRef="actComunicarCiudadanoInfraccion" />
+    <bpmn:sequenceFlow id="Flow_0cheg6c" sourceRef="gwCC1" targetRef="Activity_10mn9ue" />
+    <bpmn:sequenceFlow id="Flow_15a23kw" sourceRef="Activity_10mn9ue" targetRef="Event_1f6jqyy" />
+    <bpmn:startEvent id="StartEvent_1" name="Inicio">
+      <bpmn:outgoing>Flow_1nr3ug8</bpmn:outgoing>
+    </bpmn:startEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0023le7">
+      <bpmndi:BPMNShape id="Participant_1eech76_di" bpmnElement="Participant_1eech76" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1230" height="830" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1oq1008_di" bpmnElement="Flow_1oq1008">
+        <di:waypoint x="720" y="210" />
+        <di:waypoint x="820" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18kboet_di" bpmnElement="Flow_18kboet">
+        <di:waypoint x="1202" y="580" />
+        <di:waypoint x="1055" y="580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hbdnhl_di" bpmnElement="Flow_1hbdnhl">
+        <di:waypoint x="530" y="210" />
+        <di:waypoint x="620" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nh5qoy_di" bpmnElement="Flow_0nh5qoy">
+        <di:waypoint x="860" y="250" />
+        <di:waypoint x="860" y="355" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kilgsu_di" bpmnElement="Flow_0kilgsu">
+        <di:waypoint x="1030" y="420" />
+        <di:waypoint x="1030" y="555" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1utgkdd_di" bpmnElement="Flow_1utgkdd">
+        <di:waypoint x="885" y="380" />
+        <di:waypoint x="980" y="380" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="918" y="363" width="12" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1q9jrzu_di" bpmnElement="Flow_1q9jrzu">
+        <di:waypoint x="860" y="405" />
+        <di:waypoint x="860" y="580" />
+        <di:waypoint x="1005" y="580" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="832" y="489" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nr3ug8_di" bpmnElement="Flow_1nr3ug8">
+        <di:waypoint x="308" y="210" />
+        <di:waypoint x="430" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cheg6c_di" bpmnElement="Flow_0cheg6c">
+        <di:waypoint x="1030" y="605" />
+        <di:waypoint x="1030" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15a23kw_di" bpmnElement="Flow_15a23kw">
+        <di:waypoint x="1080" y="770" />
+        <di:waypoint x="1202" y="770" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_0j4qbw5_di" bpmnElement="actComunicarCiudadanoInfraccion" bioc:stroke="#8e24aa" bioc:fill="#e1bee7" color:background-color="#e1bee7" color:border-color="#8e24aa">
+        <dc:Bounds x="430" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1avvdm2_di" bpmnElement="actConsultarTablaSanciones" bioc:stroke="#8e24aa" bioc:fill="#e1bee7" color:background-color="#e1bee7" color:border-color="#8e24aa">
+        <dc:Bounds x="620" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10phlhh_di" bpmnElement="actReglasDecisionFlujo">
+        <dc:Bounds x="820" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1pngnps_di" bpmnElement="gwRetieneLicencia" isMarkerVisible="true" bioc:stroke="#43a047" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#43a047">
+        <dc:Bounds x="835" y="355" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="745" y="366" width="80" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0v4f8po_di" bpmnElement="actRegistrarRecepcionDocumentos">
+        <dc:Bounds x="980" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1kd4676_di" bpmnElement="gwCC1" isMarkerVisible="true" bioc:stroke="#43a047" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#43a047">
+        <dc:Bounds x="1005" y="555" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="988" y="553" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1uf677p_di" bpmnElement="Event_0mx6pcy" bioc:stroke="#fb8c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#fb8c00">
+        <dc:Bounds x="1202" y="562" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1194" y="526" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1xzhwoh_di" bpmnElement="Activity_10mn9ue">
+        <dc:Bounds x="980" y="730" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1l1l87s_di" bpmnElement="Event_1f6jqyy">
+        <dc:Bounds x="1202" y="752" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1222" y="795" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1" bioc:stroke="#43a047" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#43a047">
+        <dc:Bounds x="272" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="277" y="168" width="26" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

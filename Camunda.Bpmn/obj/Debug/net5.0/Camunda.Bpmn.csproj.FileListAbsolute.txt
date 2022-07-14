@@ -1,0 +1,13 @@
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\bin\Debug\net5.0\Camunda.Bpmn.deps.json
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\bin\Debug\net5.0\Camunda.Bpmn.dll
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\bin\Debug\net5.0\ref\Camunda.Bpmn.dll
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\bin\Debug\net5.0\Camunda.Bpmn.pdb
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.GeneratedMSBuildEditorConfig.editorconfig
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\RefitStubs.g.cs
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.AssemblyInfoInputs.cache
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.AssemblyInfo.cs
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.csproj.CoreCompileInputs.cache
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.dll
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\ref\Camunda.Bpmn.dll
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.pdb
+D:\OSCAR\Private\Codes\ConsoleAppTester\Camunda.Bpmn\obj\Debug\net5.0\Camunda.Bpmn.csproj.AssemblyReference.cache
